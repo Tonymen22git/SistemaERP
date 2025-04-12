@@ -1,0 +1,56 @@
+-- Vista de productos con su categoría
+CREATE VIEW Vista_Productos_Categorias AS
+SELECT 
+    p.id_producto,
+    p.nombre AS nombre_producto,
+    p.descripcion,
+    p.precio_unitario,
+    p.stock_actual,
+    c.nombre AS categoria
+FROM Producto p
+INNER JOIN Categoria c ON p.id_categoria = c.id_categoria;
+
+-- Vista de ventas detalladas
+CREATE VIEW Vista_Detalle_Ventas AS
+SELECT 
+    v.id_venta,
+    v.fecha,
+    c.nombre AS cliente,
+    e.nombre AS empleado,
+    dv.id_producto,
+    p.nombre AS producto,
+    dv.cantidad,
+    dv.precio_unitario,
+    (dv.cantidad * dv.precio_unitario) AS subtotal
+FROM Venta v
+INNER JOIN Cliente c ON v.id_cliente = c.id_cliente
+INNER JOIN Empleado e ON v.id_empleado = e.id_empleado
+INNER JOIN Detalle_Venta dv ON v.id_venta = dv.id_venta
+INNER JOIN Producto p ON dv.id_producto = p.id_producto;
+
+-- Vista de compras detalladas
+CREATE VIEW Vista_Detalle_Compras AS
+SELECT 
+    cp.id_compra,
+    cp.fecha,
+    pr.nombre AS proveedor,
+    e.nombre AS empleado,
+    dc.id_producto,
+    p.nombre AS producto,
+    dc.cantidad,
+    dc.precio_unitario,
+    (dc.cantidad * dc.precio_unitario) AS subtotal
+FROM Compra cp
+INNER JOIN Proveedor pr ON cp.id_proveedor = pr.id_proveedor
+INNER JOIN Empleado e ON cp.id_empleado = e.id_empleado
+INNER JOIN Detalle_Compra dc ON cp.id_compra = dc.id_compra
+INNER JOIN Producto p ON dc.id_producto = p.id_producto;
+
+-- Vista de ventas totales por mes
+CREATE VIEW Vista_Ventas_Mensuales AS
+SELECT 
+    FORMAT(fecha, 'yyyy-MM') AS mes,
+    COUNT(*) AS total_ventas,
+    SUM(total) AS total_monto
+FROM Venta
+GROUP BY FORMAT(fecha, 'yyyy-MM');

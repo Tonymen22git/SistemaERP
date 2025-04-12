@@ -1,0 +1,135 @@
+-- Crear la base de datos
+CREATE DATABASE SistemaERP;
+GO
+
+-- Usar la base de datos
+USE SistemaERP;
+GO
+
+-- Tabla Categoría
+CREATE TABLE Categoria (
+    id_categoria INT PRIMARY KEY IDENTITY(1,1),
+    nombre NVARCHAR(100) NOT NULL
+);
+
+-- Tabla Producto
+CREATE TABLE Producto (
+    id_producto INT PRIMARY KEY IDENTITY(1,1),
+    nombre NVARCHAR(100) NOT NULL,
+    descripcion NVARCHAR(255),
+    precio_unitario DECIMAL(18,2) NOT NULL,
+    stock_actual INT NOT NULL,
+    id_categoria INT NOT NULL,
+    FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria)
+);
+
+-- Tabla Proveedor
+CREATE TABLE Proveedor (
+    id_proveedor INT PRIMARY KEY IDENTITY(1,1),
+    nombre NVARCHAR(100) NOT NULL,
+    contacto NVARCHAR(100),
+    direccion NVARCHAR(255),
+    telefono NVARCHAR(20)
+);
+
+-- Tabla Empleado
+CREATE TABLE Empleado (
+    id_empleado INT PRIMARY KEY IDENTITY(1,1),
+    nombre NVARCHAR(100) NOT NULL,
+    puesto NVARCHAR(100),
+    departamento NVARCHAR(100),
+    correo NVARCHAR(100),
+    telefono NVARCHAR(20)
+);
+
+-- Tabla Cliente
+CREATE TABLE Cliente (
+    id_cliente INT PRIMARY KEY IDENTITY(1,1),
+    nombre NVARCHAR(100) NOT NULL,
+    direccion NVARCHAR(255),
+    telefono NVARCHAR(20),
+    correo NVARCHAR(100)
+);
+
+-- Tabla Compra
+CREATE TABLE Compra (
+    id_compra INT PRIMARY KEY IDENTITY(1,1),
+    fecha DATE NOT NULL,
+    id_proveedor INT NOT NULL,
+    id_empleado INT NOT NULL,
+    total DECIMAL(18,2) NOT NULL,
+    FOREIGN KEY (id_proveedor) REFERENCES Proveedor(id_proveedor),
+    FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado)
+);
+
+-- Tabla Detalle_Compra
+CREATE TABLE Detalle_Compra (
+    id_detalle_compra INT PRIMARY KEY IDENTITY(1,1),
+    id_compra INT NOT NULL,
+    id_producto INT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(18,2) NOT NULL,
+    FOREIGN KEY (id_compra) REFERENCES Compra(id_compra),
+    FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
+);
+
+-- Tabla Venta
+CREATE TABLE Venta (
+    id_venta INT PRIMARY KEY IDENTITY(1,1),
+    fecha DATE NOT NULL,
+    id_cliente INT NOT NULL,
+    id_empleado INT NOT NULL,
+    total DECIMAL(18,2) NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente),
+    FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado)
+);
+
+-- Tabla Detalle_Venta
+CREATE TABLE Detalle_Venta (
+    id_detalle_venta INT PRIMARY KEY IDENTITY(1,1),
+    id_venta INT NOT NULL,
+    id_producto INT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(18,2) NOT NULL,
+    FOREIGN KEY (id_venta) REFERENCES Venta(id_venta),
+    FOREIGN KEY (id_producto) REFERENCES Producto(id_producto)
+);
+
+-- Tabla Factura
+CREATE TABLE Factura (
+    id_factura INT PRIMARY KEY IDENTITY(1,1),
+    id_venta INT NOT NULL,
+    fecha_emision DATE NOT NULL,
+    total DECIMAL(18,2) NOT NULL,
+    metodo_pago NVARCHAR(50),
+    estado NVARCHAR(20),
+    FOREIGN KEY (id_venta) REFERENCES Venta(id_venta)
+);
+
+-- Tabla Roles (opcional para mejor práctica)
+CREATE TABLE Rol (
+    id_rol INT PRIMARY KEY IDENTITY(1,1),
+    nombre NVARCHAR(50) NOT NULL
+);
+
+-- Tabla Usuario
+CREATE TABLE Usuario (
+    id_usuario INT PRIMARY KEY IDENTITY(1,1),
+    username NVARCHAR(50) NOT NULL UNIQUE,
+    password_hash NVARCHAR(255) NOT NULL,
+    id_rol INT NOT NULL,
+    id_empleado INT NOT NULL,
+    FOREIGN KEY (id_rol) REFERENCES Rol(id_rol),
+    FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado)
+);
+
+-- Tabla Cliente_Usuario (para login de clientes)
+CREATE TABLE Cliente_Usuario (
+    id_cliente_usuario INT PRIMARY KEY IDENTITY(1,1),
+    username NVARCHAR(50) NOT NULL UNIQUE,
+    password_hash NVARCHAR(255) NOT NULL,
+    id_cliente INT NOT NULL,
+    estado BIT NOT NULL DEFAULT 1, -- 1 = activo, 0 = inactivo
+    fecha_creacion DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
+);

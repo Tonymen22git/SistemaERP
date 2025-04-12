@@ -1,0 +1,52 @@
+-- Procedimiento para registrar una nueva venta
+CREATE PROCEDURE sp_RegistrarVenta
+    @id_cliente INT,
+    @id_empleado INT,
+    @productos XML -- Ejemplo: <productos><item id="1" cantidad="2" precio="100" /></productos>
+AS
+BEGIN
+    DECLARE @id_venta INT;
+    DECLARE @total DECIMAL(18,2) = 0;
+
+    -- Crear la venta (total se actualiza después)
+    INSERT INTO Venta (fecha, id_cliente, id_empleado, total)
+    VALUES (GETDATE(), @id_cliente, @id_empleado, 0);
+
+    SET @id_venta = SCOPE_IDENTITY();
+
+    -- Insertar los detalles
+    DECLARE @id_producto INT, @cantidad INT, @precio DECIMAL(18,2);
+    DECLARE @cursor CURSOR;
+
+    SET @cursor = CURSOR FOR
+    SELECT 
+        T.c.value('@id', 'INT'),
+        T.c.value('@cantidad', 'INT'),
+        T.c.value('@precio', 'DECIMAL(18,2)')
+    FROM @productos.nodes('/productos/item') AS T(c);
+
+    OPEN @cursor;
+    FETCH NEXT FROM @cursor INTO @id_producto, @cantidad, @precio;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        INSERT INTO Detalle_Venta (id_venta, id_producto, cantidad, precio_unitario)
+        VALUES (@id_venta, @id_producto, @cantidad, @precio);
+
+        SET @total = @total + (@cantidad * @precio);
+
+        FETCH NEXT FROM @cursor INTO @id_producto, @cantidad, @precio;
+    END;
+
+    CLOSE @cursor;
+    DEALLOCATE @cursor;
+
+    -- Actualizar total en venta
+    UPDATE Venta
+    SET total = @total
+    WHERE id_venta = @id_venta;
+
+    -- Retornar el ID de venta
+    SELECT @id_venta AS id_venta;
+END;
+GO
